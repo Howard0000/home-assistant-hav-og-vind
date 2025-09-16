@@ -1,28 +1,18 @@
-# Havvarsel – Home Assistant-integrasjon (IMR)
-Enkel HACS‑klar integrasjon som henter **sjøtemperatur (°C)** og **saltholdighet (PSU)** fra **Havvarsel (IMR)**.
-Støtter flere lokasjoner via GUI (lat/lon), og eksponerer flere døgn med prognoser for pene grafer i Lovelace.
+# Havvarsel – Home Assistant-integrasjon (IMR, JSON)
+Henter **sjøtemperatur (°C)** og **saltholdighet (PSU)** fra **Havvarsel (IMR)** via **JSON** (raskere og enklere enn XML).
+Hvis API-et returnerer ekstra felter i samme serie (vind/strøm), eksponeres også disse.
 
-> **Data-kilde:** Havvarsel API (IMR): `https://api.havvarsel.no/...`  
-> **Lisens/bruk:** Følg Havvarsel/IMR sine vilkår. Husk å sette en *User-Agent* med kontaktinfo i `const.py`.
+## Funksjoner
+- GUI‑oppsett (config flow): navn, lat/lon, intervall, prognoselengde
+- Multi‑døgn forecast: `forecast_series_temp` / `forecast_series_sal`
+- Auto‑deteksjon av vind/strøm i “bundlet” JSON (legger til sensorer ved behov)
+- HACS‑klar
 
-## Installere via HACS (Custom repo)
-1. Åpne **HACS → Integrations → ⋮ → Custom repositories**.
-2. Lim inn repo‑URL (ditt GitHub‑repo), velg **Integration**.
-3. Installer **Havvarsel (IMR)** og restart Home Assistant.
-4. Legg til integrasjonen: **Settings → Devices & services → Add integration → Havvarsel**.
+## Dekningsområde
+Integrasjonen er relevant for **Norge, Sverige og Danmark** (Havvarsel-modellens dekningsområde).  
+![Dekningskart](image/dekning.png)
 
-## Legg til lokasjon
-I dialogen skriver du **Navn**, **Latitude**, **Longitude** og ev. **Oppdateringsintervall** + **Forecast timer**.
-
-## Sensorer
-- `sjøtemperatur` (°C)
-- `saltholdighet` (PSU)
-
-Begge har attributter:
-- `forecast_series_temp` / `forecast_series_sal` = liste `{time, value}` for inntil *forecast_hours* frem.
-- `model_time` = første punkt i serien.
-
-## Lovelace – ApexCharts (multi‑døgn temperatur + salinitet)
+## Lovelace – ApexCharts (temp + salinitet)
 ```yaml
 type: custom:apexcharts-card
 graph_span: 4d
@@ -33,27 +23,19 @@ series:
     name: Sjøtemp
     data_generator: |
       const s = entity.attributes.forecast_series_temp || [];
-      return s.map(p => [new Date(p.time).getTime(), p.value]);
+      return s.map(p => [p.time, p.value]);
   - entity: sensor.<navn>_saltholdighet
     name: Saltholdighet
     yaxis_id: sal
     data_generator: |
       const s = entity.attributes.forecast_series_sal || [];
-      return s.map(p => [new Date(p.time).getTime(), p.value]);
+      return s.map(p => [p.time, p.value]);
 yaxis:
   - id: temp
-    decimalsInFloat: 1
   - id: sal
     opposite: true
-    decimalsInFloat: 1
 ```
 
-## Konfigurasjon
-- **User‑Agent** settes i `custom_components/havvarsel/const.py`. Legg inn din kontakt (epost/URL).
-- **Oppdateringsintervall** (sek) og **Forecast timer** kan endres i **Options** etterpå.
-
-## Ikoner
-Legg dine `icon.png` og `icon@2x.png` i `custom_components/havvarsel/` (de brukes av HACS / UI).
-
-## Endringslogg
-Se `CHANGELOG.md`.
+## Viktig
+- Sett `USER_AGENT` i `custom_components/havvarsel/const.py` med kontaktinfo (IMR krever dette).
+- HACS: legg repoet til som *Custom repository* (Integration) og installer derfra.

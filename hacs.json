@@ -1,5 +1,5 @@
 {
-  "name": "Havvarsel (IMR)",
+  "name": "Havvarsel (IMR, JSON)",
   "render_readme": true,
   "homeassistant": "2024.12.0"
 }
