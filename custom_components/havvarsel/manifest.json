@@ -1,7 +1,7 @@
 {
   "domain": "havvarsel",
-  "name": "Havvarsel (IMR)",
-  "version": "0.1.0",
+  "name": "Havvarsel (IMR, JSON)",
+  "version": "0.3.0",
   "documentation": "https://github.com/yourname/ha-havvarsel#readme",
   "issue_tracker": "https://github.com/yourname/ha-havvarsel/issues",
   "iot_class": "cloud_polling",

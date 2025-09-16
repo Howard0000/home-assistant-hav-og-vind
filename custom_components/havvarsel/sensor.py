@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import Any
 
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import UnitOfTemperature, ATTR_ATTRIBUTION
+from homeassistant.const import UnitOfTemperature, ATTR_ATTRIBUTION, UnitOfSpeed
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -25,104 +25,14 @@ class Cfg:
     scan: int
     forecast_hours: int
 
-def _pick(d: dict[str, Any], *keys, default=None):
-    for k in keys:
-        if k in d:
-            return d[k]
-    lower = {k.lower(): v for k, v in d.items()}
-    for k in keys:
-        v = lower.get(k.lower())
-        if v is not None:
-            return v
-    return default
-
-def _extract_series(payload: Any) -> list[dict]:
-    if not payload:
-        return []
-    if isinstance(payload, dict):
-        for k in ("data", "series", "projection", "results"):
-            if isinstance(payload.get(k), list):
-                payload = payload[k]
-                break
-    if not isinstance(payload, list):
-        return []
-    out: list[dict] = []
-    for item in payload:
-        if not isinstance(item, dict):
-            continue
-        t = _pick(item, "time", "timestamp", "t")
-        temp = _pick(item, "temperature", "temp", "T")
-        sal = _pick(item, "salinity", "psu", "S")
-        out.append({"time": t, "temperature": temp, "salinity": sal})
+def _series_to_attr(series: list[dict], key: str, limit: int) -> list[dict]:
+    out = []
+    for p in series:
+        if key in p and p[key] is not None:
+            out.append({"time": int(p["raw_time"]), "value": p[key]})
+        if len(out) >= limit:
+            break
     return out
-
-class _Base(CoordinatorEntity, SensorEntity):
-    _attr_icon = "mdi:waves"
-
-    def __init__(self, coordinator, cfg: Cfg):
-        super().__init__(coordinator)
-        self._cfg = cfg
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        attrs = {"lat": self._cfg.lat, "lon": self._cfg.lon, ATTR_ATTRIBUTION: ATTRIBUTION}
-        series: list[dict] = self.coordinator.data or []
-        if series:
-            attrs["forecast_series_temp"] = [
-                {"time": p.get("time"), "value": p.get("temperature")}
-                for p in series if p.get("temperature") is not None
-            ][: self._cfg.forecast_hours]
-            attrs["forecast_series_sal"] = [
-                {"time": p.get("time"), "value": p.get("salinity")}
-                for p in series if p.get("salinity") is not None
-            ][: self._cfg.forecast_hours]
-            attrs["model_time"] = series[0].get("time")
-        return attrs
-
-class TempSensor(_Base):
-    _attr_has_entity_name = True
-    _attr_device_class = "temperature"
-    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
-
-    def __init__(self, coordinator, cfg: Cfg):
-        super().__init__(coordinator, cfg)
-        self._attr_name = f"{cfg.name} sjøtemperatur"
-        self._attr_unique_id = f"havvarsel_temp_{cfg.lat:.5f}_{cfg.lon:.5f}"
-
-    @property
-    def native_value(self) -> float | None:
-        series: list[dict] = self.coordinator.data or []
-        if not series:
-            return None
-        v = series[0].get("temperature")
-        try:
-            return None if v is None else float(v)
-        except Exception:
-            return None
-
-class SalSensor(_Base):
-    _attr_has_entity_name = True
-    _attr_icon = "mdi:beaker"
-
-    def __init__(self, coordinator, cfg: Cfg):
-        super().__init__(coordinator, cfg)
-        self._attr_name = f"{cfg.name} saltholdighet"
-        self._attr_unique_id = f"havvarsel_sal_{cfg.lat:.5f}_{cfg.lon:.5f}"
-
-    @property
-    def native_unit_of_measurement(self) -> str | None:
-        return "PSU"
-
-    @property
-    def native_value(self) -> float | None:
-        series: list[dict] = self.coordinator.data or []
-        if not series:
-            return None
-        v = series[0].get("salinity")
-        try:
-            return None if v is None else float(v)
-        except Exception:
-            return None
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     cfg = Cfg(
@@ -137,8 +47,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     api = HavvarselApi(session, USER_AGENT)
 
     async def _update() -> list[dict] | None:
-        data = await api.fetch_projection(cfg.lon, cfg.lat)
-        return _extract_series(data)
+        temp = await api.fetch_variable(cfg.lon, cfg.lat, "temperature")
+        sal  = await api.fetch_variable(cfg.lon, cfg.lat, "salinity")
+        merged = api.merge_series_by_time(temp, sal)
+        return merged
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -149,4 +61,114 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     )
     await coordinator.async_config_entry_first_refresh()
 
-    async_add_entities([TempSensor(coordinator, cfg), SalSensor(coordinator, cfg)])
+    entities: list[SensorEntity] = [TempSensor(coordinator, cfg), SalSensor(coordinator, cfg)]
+    sample = coordinator.data[0] if coordinator.data else {}
+    if any(k in sample for k in ("wind_length","wind_direction")):
+        entities += [WindSpeedSensor(coordinator, cfg), WindDirSensor(coordinator, cfg)]
+    if any(k in sample for k in ("current_length","current_direction")):
+        entities += [CurrentSpeedSensor(coordinator, cfg), CurrentDirSensor(coordinator, cfg)]
+    async_add_entities(entities)
+
+class _Base(CoordinatorEntity, SensorEntity):
+    _attr_icon = "mdi:waves"
+    def __init__(self, coordinator, cfg: Cfg): 
+        super().__init__(coordinator)
+        self._cfg = cfg
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        attrs = {"lat": self._cfg.lat, "lon": self._cfg.lon, ATTR_ATTRIBUTION: ATTRIBUTION}
+        series: list[dict] = self.coordinator.data or []
+        if series:
+            attrs["model_time"] = int(series[0].get("raw_time"))
+        return attrs
+
+class TempSensor(_Base):
+    _attr_has_entity_name = True
+    _attr_device_class = "temperature"
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    def __init__(self, coordinator, cfg: Cfg):
+        super().__init__(coordinator, cfg)
+        self._attr_name = f"{cfg.name} sjøtemperatur"
+        self._attr_unique_id = f"havvarsel_temp_{cfg.lat:.5f}_{cfg.lon:.5f}"
+    @property
+    def native_value(self):
+        s = self.coordinator.data or []
+        return None if not s else s[0].get("temperature")
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        attrs = super().extra_state_attributes
+        s = self.coordinator.data or []
+        attrs["forecast_series_temp"] = _series_to_attr(s, "temperature", self._cfg.forecast_hours)
+        return attrs
+
+class SalSensor(_Base):
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:beaker"
+    def __init__(self, coordinator, cfg: Cfg):
+        super().__init__(coordinator, cfg)
+        self._attr_name = f"{cfg.name} saltholdighet"
+        self._attr_unique_id = f"havvarsel_sal_{cfg.lat:.5f}_{cfg.lon:.5f}"
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        return "PSU"
+    @property
+    def native_value(self):
+        s = self.coordinator.data or []
+        return None if not s else s[0].get("salinity")
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        attrs = super().extra_state_attributes
+        s = self.coordinator.data or []
+        attrs["forecast_series_sal"] = _series_to_attr(s, "salinity", self._cfg.forecast_hours)
+        return attrs
+
+class WindSpeedSensor(_Base):
+    _attr_has_entity_name = True
+    _attr_native_unit_of_measurement = UnitOfSpeed.METERS_PER_SECOND
+    _attr_icon = "mdi:weather-windy"
+    def __init__(self, coordinator, cfg: Cfg):
+        super().__init__(coordinator, cfg)
+        self._attr_name = f"{cfg.name} vindhastighet"
+        self._attr_unique_id = f"havvarsel_windspeed_{cfg.lat:.5f}_{cfg.lon:.5f}"
+    @property
+    def native_value(self):
+        s = self.coordinator.data or []
+        return None if not s else s[0].get("wind_length")
+
+class WindDirSensor(_Base):
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:compass"
+    def __init__(self, coordinator, cfg: Cfg):
+        super().__init__(coordinator, cfg)
+        self._attr_name = f"{cfg.name} vindretning"
+        self._attr_unique_id = f"havvarsel_winddir_{cfg.lat:.5f}_{cfg.lon:.5f}"
+    @property
+    def native_value(self):
+        s = self.coordinator.data or []
+        return None if not s else s[0].get("wind_direction")
+
+class CurrentSpeedSensor(_Base):
+    _attr_has_entity_name = True
+    _attr_native_unit_of_measurement = UnitOfSpeed.METERS_PER_SECOND
+    _attr_icon = "mdi:wave"
+    def __init__(self, coordinator, cfg: Cfg):
+        super().__init__(coordinator, cfg)
+        self._attr_name = f"{cfg.name} strømhastighet"
+        self._attr_unique_id = f"havvarsel_currentspeed_{cfg.lat:.5f}_{cfg.lon:.5f}"
+    @property
+    def native_value(self):
+        s = self.coordinator.data or []
+        return None if not s else s[0].get("current_length")
+
+class CurrentDirSensor(_Base):
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:compass-outline"
+    def __init__(self, coordinator, cfg: Cfg):
+        super().__init__(coordinator, cfg)
+        self._attr_name = f"{cfg.name} strømretning"
+        self._attr_unique_id = f"havvarsel_currentdir_{cfg.lat:.5f}_{cfg.lon:.5f}"
+    @property
+    def native_value(self):
+        s = self.coordinator.data or []
+        return None if not s else s[0].get("current_direction")
