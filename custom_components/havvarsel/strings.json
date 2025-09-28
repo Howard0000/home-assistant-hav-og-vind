@@ -1,30 +1,23 @@
 {
-  "title": "Havvarsel",
+  "title": "Hav og vind",
   "config": {
     "step": {
       "user": {
         "title": "Legg til lokasjon",
-        "description": "Skriv inn navn, latitude og longitude for stedet.",
+        "description": "Velg bredde- og lengdegrad (forvalg fra systemet).",
         "data": {
-          "name": "Navn",
-          "lat": "Latitude",
-          "lon": "Longitude",
-          "scan_interval": "Oppdateringsintervall (sekunder)",
-          "forecast_hours": "Prognoselengde (timer)"
+          "latitude": "Breddegrad",
+          "longitude": "Lengdegrad"
         }
       }
-    },
-    "error": {
-      "invalid_input": "Ugyldig input – sjekk verdiene."
-    },
-    "options": {
-      "step": {
-        "init": {
-          "title": "Innstillinger",
-          "data": {
-            "scan_interval": "Oppdateringsintervall (sekunder)",
-            "forecast_hours": "Prognoselengde (timer)"
-          }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Innstillinger",
+        "data": {
+          "scan_interval_minutes": "Oppdateringsintervall (minutter)"
         }
       }
     }
