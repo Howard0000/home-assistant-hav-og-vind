@@ -1,0 +1,115 @@
+# Lovelace Dashboard Kort for Hav- og Vinddata
+#
+# Dette kortet lar deg vise værdata (temperatur, vindhastighet, etc.) fra forskjellige
+# lokasjoner generert av din 'Hav og vind' Home Assistant integrasjon.
+# Du kan enkelt bytte mellom lokasjonene ved hjelp av en rullegardinmeny.
+#
+# Forutsetninger:
+#   1. 'Hav og vind' Home Assistant integrasjonen må være installert og konfigurert
+#      med de ønskede lokasjonene.
+#   2. Home Assistant Community Store (HACS) må være installert.
+#   3. 'Multiple-entity-row' Custom Card må være installert via HACS.
+#      (Gå til HACS -> Frontend, søk etter "Multiple-entity-row" og installer.
+#       Start Home Assistant på nytt etter installasjon.)
+#
+# Oppsett:
+#   1. Opprett en 'input_select' helper:
+#      - Gå til Innstillinger -> Enheter og tjenester -> Hjelpemidler (Helpers).
+#      - Klikk på 'Opprett hjelpemiddel' (Create Helper).
+#      - Velg 'Rullegardinliste' (Dropdown).
+#      - Gi den et Navn, f.eks. 'Hav og Vind Sted'. Dette vil automatisk gi
+#        `entity_id: input_select.hav_og_vind_sted`.
+#      - Under 'Alternativer' (Options), legg inn de *eksakte* stedsnavnene
+#        du brukte da du konfigurerte 'Hav og vind' integrasjonen din (f.eks. 'Strømtangen Fyr',
+#        'Færder Fyr', 'Hvaler'). Dette er den viktigste brukerkonfigurasjonen.
+#
+#   2. Legg til dette kortet i ditt Lovelace Dashboard:
+#      - Naviger til dashbordet ditt i Home Assistant.
+#      - Klikk på de tre prikkene i øvre høyre hjørne og velg "Rediger dashbord".
+#      - Klikk på "Legg til kort".
+#      - Velg "Manuell kort" (Manual Card).
+#      - Kopier innholdet i denne filen og lim det inn i kort-konfigurasjonen.
+#      - VIKTIG: Juster 'fallback' sensor-ID'ene i YAML-filen (f.eks.
+#        `sensor.hav_og_vind_stromtangen_fyr_sea_water_temperature`) til *dine egne*
+#        fungerende sensorer for en av lokasjonene dine. Dette sikrer at kortet viser
+#        data selv om ingen lokasjon er valgt i rullegardinlisten.
+#      - Lagre kortet.
+#
+# Nå skal du ha et kort hvor du kan velge et sted fra rullegardinlisten, og dataene
+# vil oppdateres dynamisk!
+
+type: entities
+title: Hav- og Vinddata
+entities:
+  - entity: input_select.hav_og_vind_sted # Må matche entity_id du opprettet for din input_select
+    name: Velg sted
+    icon: mdi:map-marker
+  - type: custom:multiple-entity-row
+    entity: >
+      {% set selected_location = states('input_select.hav_og_vind_sted') %}
+      {% if selected_location %}
+        {# Home Assistant formaterer stedsnavn til entity_id-vennlig format (små bokstaver,
+           mellomrom til understrek, norske tegn konverteres til ASCII). #}
+        {% set formatted_location = selected_location | lower | replace(' ', '_') | replace('ø', 'o') | replace('æ', 'a') | replace('å', 'a') %}
+        {{ 'sensor.hav_og_vind_' ~ formatted_location ~ '_sea_water_temperature' }}
+      {% else %}
+        {# FALLBACK: Erstatt med en eksisterende sensor fra en av dine lokasjoner. #}
+        sensor.hav_og_vind_stromtangen_fyr_sea_water_temperature
+      {% endif %}
+    name: Sjøtemperatur
+    icon: mdi:coolant-temperature
+    show_state: true
+    state_header: Nå
+    secondary_info: last-changed
+  - type: custom:multiple-entity-row
+    entity: >
+      {% set selected_location = states('input_select.hav_og_vind_sted') %}
+      {% if selected_location %}
+        {% set formatted_location = selected_location | lower | replace(' ', '_') | replace('ø', 'o') | replace('æ', 'a') | replace('å', 'a') %}
+        {{ 'sensor.hav_og_vind_' ~ formatted_location ~ '_wind_speed' }}
+      {% else %}
+        {# FALLBACK: Erstatt med en eksisterende sensor fra en av dine lokasjoner. #}
+        sensor.hav_og_vind_stromtangen_fyr_wind_speed
+      {% endif %}
+    name: Vindhastighet
+    icon: mdi:weather-windy
+    show_state: true
+    state_header: Nå
+    secondary_info: last-changed
+  - type: custom:multiple-entity-row
+    entity: >
+      {% set selected_location = states('input_select.hav_og_vind_sted') %}
+      {% if selected_location %}
+        {% set formatted_location = selected_location | lower | replace(' ', '_') | replace('ø', 'o') | replace('æ', 'a') | replace('å', 'a') %}
+        {{ 'sensor.hav_og_vind_' ~ formatted_location ~ '_wind_speed_of_gust' }}
+      {% else %}
+        {# FALLBACK: Erstatt med en eksisterende sensor fra en av dine lokasjoner. #}
+        sensor.hav_og_vind_stromtangen_fyr_wind_speed_of_gust
+      {% endif %}
+    name: Vindkast
+    icon: mdi:weather-windy
+    show_state: true
+    state_header: Nå
+    secondary_info: last-changed
+  - type: custom:multiple-entity-row
+    entity: >
+      {% set selected_location = states('input_select.hav_og_vind_sted') %}
+      {% if selected_location %}
+        {% set formatted_location = selected_location | lower | replace(' ', '_') | replace('ø', 'o') | replace('æ', 'a') | replace('å', 'a') %}
+        {{ 'sensor.hav_og_vind_' ~ formatted_location ~ '_wind_from_direction' }}
+      {% else %}
+        {# FALLBACK: Erstatt med en eksisterende sensor fra en av dine lokasjoner. #}
+        sensor.hav_og_vind_stromtangen_fyr_wind_from_direction
+      {% endif %}
+    name: Vindretning
+    icon: mdi:compass-rose
+    show_state: true
+    state_header: Nå
+    secondary_info: last-changed
+  # Fortsett å legge til flere sensorelementer her.
+  # For hver sensor:
+  #   - Bruk 'name' fra SensorDesc-listen din for feltet 'name:'.
+  #   - Bruk 'key' fra SensorDesc-listen din (med foranstilt underscore)
+  #     i slutten av 'entity:'-malen.
+  #   - Sørg for at 'icon:' stemmer med SensorDesc.
+  #   - OPPDATER FALLBACK-SENSOREN FOR HVER ENKELT LINJE!
