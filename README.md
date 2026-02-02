@@ -11,14 +11,14 @@ Dette er en uoffisiell Home Assistant-integrasjon som henter data for **vær, vi
 
 Integrasjonen er laget for å brukes sammen med et ferdig dashboard-oppsett.
 
+Se `docs/dashboard/` for filer og forklaring.
+
 ## Dekningsområde
 Data hentes kun der det finnes tilgjengelige prognoser fra MET, Kartverket og havvarsel.no.
 
 
 ![Dekningsområde for Hav og vind](image/dekning.png)
 
-
-Se `docs/dashboard/` for filer og forklaring.
 
 ## Installasjon
 
