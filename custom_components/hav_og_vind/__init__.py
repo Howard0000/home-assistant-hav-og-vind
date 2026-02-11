@@ -16,6 +16,8 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
 
+CONF_SCAN_INTERVAL_MINUTES = "scan_interval_minutes"
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Use Home Assistant-managed aiohttp session
@@ -25,13 +27,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     lat = float(entry.data.get(CONF_LATITUDE, hass.config.latitude))
     lon = float(entry.data.get(CONF_LONGITUDE, hass.config.longitude))
     name = entry.data.get(CONF_NAME) or "Hav og vind"
-    scan_minutes = entry.options.get("scan_interval_minutes", DEFAULT_SCAN_MINUTES)
+    scan_minutes = entry.options.get(CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_MINUTES)
 
     async def _async_update():
         try:
             return await api.fetch(lat, lon, name=name)
-        except Exception as e:
-            raise UpdateFailed(str(e)) from e
+        except Exception as err:
+            raise UpdateFailed(str(err)) from err
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -41,10 +43,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(minutes=scan_minutes),
     )
 
-    # NEW: Apply updated options without restart/reload
-    async def _async_update_options(hass: HomeAssistant, updated_entry: ConfigEntry) -> None:
+    # Apply updated options without restart/reload
+    async def _async_update_options(updated_entry: ConfigEntry) -> None:
         scan_minutes_new = updated_entry.options.get(
-            "scan_interval_minutes", DEFAULT_SCAN_MINUTES
+            CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_MINUTES
         )
         coordinator.update_interval = timedelta(minutes=scan_minutes_new)
         await coordinator.async_request_refresh()
