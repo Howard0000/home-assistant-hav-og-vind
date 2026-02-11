@@ -47,6 +47,8 @@ class HavOgVindActiveStationSelect(SelectEntity):
     _attr_unique_id = "hav_og_vind_active_station"
     _attr_icon = "mdi:map-marker"
     _attr_entity_category = EntityCategory.CONFIG
+    _attr_suggested_object_id = "hav_og_vind_aktiv_stasjon"
+
 
     def __init__(self, hass: HomeAssistant) -> None:
         self._hass = hass
