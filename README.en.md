@@ -66,6 +66,30 @@ These automatically follow the selected **Active station**.
 
 ---
 
+## 🖥️ Example dashboard (recommended)
+
+This integration is designed to work especially well with a **station-independent dashboard** based on the proxy sensors.
+
+The repository includes a ready-to-use example dashboard:
+
+- `docs/dashboard/lovelace_hav_og_vind.yaml`
+
+This dashboard:
+- uses only **proxy sensors** (`sensor.hav_vind_*`)
+- automatically follows the selected **Active station**
+- shows both **current values and forecasts** for weather, ocean and tides
+- includes charts for wind, waves, temperature, salinity, precipitation and tides
+- works the same no matter how many locations you add
+
+Benefits:
+- ✅ You **do not** need to change the dashboard when adding new locations  
+- 👉 You just switch station in the **“Active station”** dropdown  
+- 🧭 The dashboard is fully **station-independent** and easy to maintain
+
+> ℹ️ The integration works perfectly fine without this dashboard, but **the whole proxy sensor + active station concept is designed to really shine together with this setup.**
+
+---
+
 ## 📥 Requirements
 
 - Home Assistant 2024.x or newer  
@@ -126,11 +150,11 @@ All data is fetched directly from public, open APIs.
 
 ## 🛠 Troubleshooting
 
-- Check **Settings → System → Logs** for:
+- Check **Settings → System → Logs**
 - If a sensor is `unavailable`, check:
-- That a station is selected
-- That the API provides data for the area
-- Network / internet connectivity
+  - That a station is selected
+  - That the API provides data for the area
+  - Network / internet connectivity
 
 ---
 
@@ -166,4 +190,3 @@ Data may be delayed, incomplete or incorrect.
 
 Do not rely on this integration as the sole decision basis for safety-critical purposes
 (marine operations, weather-critical activities, etc.).
-
