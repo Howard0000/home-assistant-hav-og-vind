@@ -10,13 +10,11 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import HavOgVindApi
-from .const import DEFAULT_SCAN_MINUTES, DOMAIN
+from .const import CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_MINUTES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
-
-CONF_SCAN_INTERVAL_MINUTES = "scan_interval_minutes"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
