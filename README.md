@@ -16,7 +16,7 @@ Integrasjonen lar deg:
 Dette er en *custom component* som konfigureres fullt ut via Home Assistant sitt UI –  
 ingen YAML kreves for grunnoppsett.
 
-![Dekningskart](images/dekning.png)
+![Dekningskart](image/dekning.png)
 
 ---
 
