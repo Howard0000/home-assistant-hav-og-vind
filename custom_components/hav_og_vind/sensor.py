@@ -70,7 +70,8 @@ def _trim_series(series: Any, max_points: int = 72) -> Any:
     out = series[::step]
 
     # Ensure we always include the last point (end of horizon)
-    if out and out[-1] is not series[-1]:
+    if out and out[-1] != series[-1]:
+
         if len(out) >= max_points:
             out[-1] = series[-1]
         else:
@@ -145,8 +146,8 @@ async def async_setup_entry(
 
     entities = [HavOgVindSensor(coordinator, entry, desc) for desc in SENSORS]
 
-    # Legg til én felles "stasjonsliste"-sensor (kun én gang per HA-instans)
-    domain_data: dict[str, Any] = hass.data.setdefault(DOMAIN, {})
+    # Domenedata ligger allerede i hass.data[DOMAIN] fra __init__.py
+    domain_data: dict[str, Any] = hass.data[DOMAIN]
     global_data: dict[str, Any] = domain_data.setdefault("_global", {})
     if not global_data.get("stations_sensor_added"):
         entities.append(HavOgVindStationsSensor(hass))
@@ -239,7 +240,7 @@ class HavOgVindSensor(CoordinatorEntity, SensorEntity):
         if self._desc.data_key == "sea_water_salinity" and "salinity_time" in data:
             attrs["salinity_time"] = data["salinity_time"]
 
-        if self._desc.data_key.startswith("tide_"):
+        if self._desc.data_key.startswith("tide_") or self._desc.data_key == "tide_prediction":
             if "tide_location_name" in data:
                 attrs["tide_location_name"] = data["tide_location_name"]
             # hold dette “lett” (serier kommer fra api.py-fiksen under)
@@ -254,8 +255,10 @@ class HavOgVindSensor(CoordinatorEntity, SensorEntity):
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
-            "manufacturer": "MET Norway / Kartverket / Havvarsel",
-            "configuration_url": "https://api.met.no/",
+            # Litt mer nøytralt, og unngår at det ser ut som du "er" MET/Kartverket
+            "manufacturer": "Hav og vind (MET / Havvarsel / Kartverket)",
+            # Peker til repo/README (mest relevant for bruker og review)
+            "configuration_url": "https://github.com/Howard0000/home-assistant-hav-og-vind",
         }
 
 class HavOgVindStationsSensor(SensorEntity):
@@ -300,3 +303,4 @@ class HavOgVindStationsSensor(SensorEntity):
         if self._unsub:
             self._unsub()
             self._unsub = None
+
