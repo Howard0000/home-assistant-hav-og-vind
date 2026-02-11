@@ -41,6 +41,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(minutes=scan_minutes),
     )
 
+    # NEW: Apply updated options without restart/reload
+    async def _async_update_options(hass: HomeAssistant, updated_entry: ConfigEntry) -> None:
+        scan_minutes_new = updated_entry.options.get(
+            "scan_interval_minutes", DEFAULT_SCAN_MINUTES
+        )
+        coordinator.update_interval = timedelta(minutes=scan_minutes_new)
+        await coordinator.async_request_refresh()
+
+    entry.async_on_unload(entry.add_update_listener(_async_update_options))
+
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})
