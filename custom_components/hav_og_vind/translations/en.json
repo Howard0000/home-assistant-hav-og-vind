@@ -1,0 +1,30 @@
+{
+  "title": "Hav og vind",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add location",
+        "description": "Choose position. Tides are fetched from Kartverket based on the position.",
+        "data": {
+          "name": "Name",
+          "latitude": "Latitude",
+          "longitude": "Longitude"
+        }
+      }
+    },
+    "error": {
+      "missing_coordinates": "Latitude and longitude are required.",
+      "invalid_coordinates": "Invalid latitude/longitude."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "scan_interval_minutes": "Update interval (minutes)"
+        }
+      }
+    }
+  }
+}
