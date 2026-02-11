@@ -1,0 +1,30 @@
+{
+  "title": "Hav og vind",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Legg til lokasjon",
+        "description": "Velg posisjon. Tidevann hentes fra Kartverket basert på posisjonen.",
+        "data": {
+          "name": "Navn",
+          "latitude": "Breddegrad",
+          "longitude": "Lengdegrad"
+        }
+      }
+    },
+    "error": {
+      "missing_coordinates": "Breddegrad og lengdegrad må fylles inn.",
+      "invalid_coordinates": "Ugyldig breddegrad/lengdegrad."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Innstillinger",
+        "data": {
+          "scan_interval_minutes": "Oppdateringsintervall (minutter)"
+        }
+      }
+    }
+  }
+}
