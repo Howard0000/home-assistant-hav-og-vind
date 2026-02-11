@@ -2,5 +2,5 @@
   "name": "Hav og vind",
   "render_readme": true,
   "content_in_root": false,
-  "country": [NO", "SE", "FI", "DK"]
+  "country": ["NO", "SE", "FI", "DK"]
 }
