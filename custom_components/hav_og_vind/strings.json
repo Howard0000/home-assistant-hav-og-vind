@@ -11,6 +11,13 @@
           "longitude": "Lengdegrad"
         }
       }
+    },
+    "error": {
+      "missing_coordinates": "Mangler koordinater.",
+      "invalid_coordinates": "Ugyldige koordinater."
+    },
+    "abort": {
+      "already_configured": "Denne posisjonen er allerede konfigurert."
     }
   },
   "options": {
@@ -22,12 +29,5 @@
         }
       }
     }
-  },
-  "error": {
-    "missing_coordinates": "Mangler koordinater.",
-    "invalid_coordinates": "Ugyldige koordinater."
-  },
-  "abort": {
-    "already_configured": "Denne posisjonen er allerede konfigurert."
   }
 }
