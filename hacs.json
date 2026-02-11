@@ -1,6 +1,6 @@
 {
   "name": "Hav og vind",
   "content_in_root": false,
-  "domains": ["hav_og_vind"],
-  "render_readme": true
+  "country": ["NO", "SE", "DK"],
+  "homeassistant": "2024.6.0"
 }
