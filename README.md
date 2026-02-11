@@ -66,6 +66,30 @@ Disse følger automatisk valgt **Aktiv stasjon**.
 
 ---
 
+## 🖥️ Eksempel-dashboard (anbefalt)
+
+Denne integrasjonen er laget for å fungere ekstra godt sammen med et **stasjons-uavhengig dashboard** basert på proxy-sensorene.
+
+I repoet følger det med et ferdig eksempel-dashboard:
+
+- `docs/dashboard/lovelace_hav_og_vind.yaml`
+
+Dette dashboardet:
+- bruker kun **proxy-sensorer** (`sensor.hav_vind_*`)
+- følger automatisk valgt **Aktiv stasjon**
+- viser både **nåverdier og prognoser** for vær, hav og tidevann
+- inneholder grafer for vind, bølger, temperatur, saltholdighet, nedbør og tidevann
+- fungerer likt uansett hvor mange lokasjoner du legger til
+
+Fordeler:
+- ✅ Du trenger **ikke** endre dashboardet når du legger til nye lokasjoner  
+- 👉 Du bare bytter stasjon i **“Aktiv stasjon”**-dropdown  
+- 🧭 Dashboardet er helt **stasjons-uavhengig** og enkelt å vedlikeholde
+
+> ℹ️ Integrasjonen fungerer helt fint uten dette dashboardet, men **hele konseptet med proxy-sensorer og aktiv stasjon er laget for å skinne sammen med dette oppsettet.**
+
+---
+
 ## 📥 Krav
 
 - Home Assistant 2024.x eller nyere  
@@ -126,11 +150,11 @@ Alle data hentes direkte fra åpne, offentlige API-er.
 
 ## 🛠 Feilsøking
 
-- Sjekk **Innstillinger → System → Logger** for:
+- Sjekk **Innstillinger → System → Logger**
 - Hvis en sensor er `unavailable`, sjekk:
-- At valgt stasjon finnes
-- At API-et leverer data for området
-- Nettverk / internettilgang
+  - At valgt stasjon finnes
+  - At API-et leverer data for området
+  - Nettverk / internettilgang
 
 ---
 
@@ -166,4 +190,3 @@ Data kan være forsinket, ufullstendig eller feil.
 
 Ikke bruk denne integrasjonen som eneste beslutningsgrunnlag for sikkerhetskritiske formål
 (sjøfart, værkritiske operasjoner, etc.).
-
