@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME, Platform
@@ -18,7 +19,6 @@ PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    # Use Home Assistant-managed aiohttp session
     session = async_get_clientsession(hass)
     api = HavOgVindApi(session)
 
@@ -27,7 +27,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     name = entry.data.get(CONF_NAME) or "Hav og vind"
     scan_minutes = entry.options.get(CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_MINUTES)
 
-    async def _async_update():
+    async def _async_update() -> Any:
         try:
             return await api.fetch(lat, lon, name=name)
         except Exception as err:
@@ -41,7 +41,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(minutes=scan_minutes),
     )
 
-    # Apply updated options without restart/reload
     async def _async_update_options(updated_entry: ConfigEntry) -> None:
         scan_minutes_new = updated_entry.options.get(
             CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_MINUTES
