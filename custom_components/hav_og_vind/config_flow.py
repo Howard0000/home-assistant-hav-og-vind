@@ -9,7 +9,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME
 from homeassistant.helpers import config_validation as cv
 
-from .const import DEFAULT_SCAN_MINUTES, DOMAIN
+from .const import CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_MINUTES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,8 +26,8 @@ class HavOgVindOptionsFlow(config_entries.OptionsFlow):
         schema = vol.Schema(
             {
                 vol.Required(
-                    "scan_interval_minutes",
-                    default=opts.get("scan_interval_minutes", DEFAULT_SCAN_MINUTES),
+                    CONF_SCAN_INTERVAL_MINUTES,
+                    default=opts.get(CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_MINUTES),
                 ): vol.All(vol.Coerce(int), vol.Range(min=5, max=360)),
             }
         )
