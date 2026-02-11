@@ -35,7 +35,7 @@ def _trim_series(series: Any, max_points: int = 72) -> Any:
     out = series[::step]
 
     # Ensure we always include the last point (end of horizon)
-    if out and out[-1] is not series[-1]:
+    if out and out[-1] != series[-1]:
         if len(out) >= max_points:
             out[-1] = series[-1]
         else:
@@ -303,7 +303,7 @@ class HavOgVindProxySensor(SensorEntity):
 
 
 class HavOgVindTidevannProxySensor(SensorEntity):
-    """Special proxy for tidevann with multiple series attributes."""
+    """Proxy for tidevann. Henter state + serier fra tidevann_prediksjon-sensoren."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_should_poll = False
@@ -321,28 +321,10 @@ class HavOgVindTidevannProxySensor(SensorEntity):
     def _src_pred(self, st_slug: str) -> str | None:
         ent1 = f"sensor.hav_og_vind_{st_slug}_tidevann_prediksjon"
         ent2 = f"sensor.{st_slug}_tidevann_prediksjon"
-        if self.hass.states.get(ent1) and self.hass.states.get(ent1).state not in _INVALID_STATES:
-            return ent1
-        if self.hass.states.get(ent2) and self.hass.states.get(ent2).state not in _INVALID_STATES:
-            return ent2
-        return None
-
-    def _src_fore(self, st_slug: str) -> str | None:
-        ent1 = f"sensor.hav_og_vind_{st_slug}_tidevann_prognose"
-        ent2 = f"sensor.{st_slug}_tidevann_prognose"
-        if self.hass.states.get(ent1) and self.hass.states.get(ent1).state not in _INVALID_STATES:
-            return ent1
-        if self.hass.states.get(ent2) and self.hass.states.get(ent2).state not in _INVALID_STATES:
-            return ent2
-        return None
-
-    def _src_obs(self, st_slug: str) -> str | None:
-        ent1 = f"sensor.hav_og_vind_{st_slug}_tidevann_observasjon"
-        ent2 = f"sensor.{st_slug}_tidevann_observasjon"
-        if self.hass.states.get(ent1) and self.hass.states.get(ent1).state not in _INVALID_STATES:
-            return ent1
-        if self.hass.states.get(ent2) and self.hass.states.get(ent2).state not in _INVALID_STATES:
-            return ent2
+        for ent in (ent1, ent2):
+            st = self.hass.states.get(ent)
+            if st and st.state not in _INVALID_STATES:
+                return ent
         return None
 
     @property
@@ -350,20 +332,21 @@ class HavOgVindTidevannProxySensor(SensorEntity):
         station = _get_selected_station(self.hass)
         if not station:
             return False
-        st_slug = slugify(station)
-        return self._src_pred(st_slug) is not None
+        return self._src_pred(slugify(station)) is not None
 
     @property
     def native_value(self) -> float | None:
         station = _get_selected_station(self.hass)
         if not station:
             return None
-        st_slug = slugify(station)
-        src = self._src_pred(st_slug)
-        if not src or not self.hass.states.get(src):
+        src = self._src_pred(slugify(station))
+        if not src:
+            return None
+        st = self.hass.states.get(src)
+        if not st or st.state in _INVALID_STATES:
             return None
         try:
-            return float(self.hass.states.get(src).state)
+            return float(st.state)
         except Exception:
             return None
 
@@ -373,33 +356,20 @@ class HavOgVindTidevannProxySensor(SensorEntity):
         if not station:
             return {"source_entity_id": ""}
 
-        st_slug = slugify(station)
-        pred = self._src_pred(st_slug)
-        out: dict[str, Any] = {"source_entity_id": pred or ""}
+        src = self._src_pred(slugify(station))
+        out: dict[str, Any] = {"source_entity_id": src or ""}
 
-        tf = None
-        to = None
+        if src:
+            st = self.hass.states.get(src)
+            if st:
+                out["tide_prediction_series"] = _trim_series(st.attributes.get("tide_prediction_series"))
+                out["tide_forecast_series"] = _trim_series(st.attributes.get("tide_forecast_series"))
+                out["tide_observation_series"] = _trim_series(st.attributes.get("tide_observation_series"))
+                return out
 
-        if pred and self.hass.states.get(pred):
-            st = self.hass.states.get(pred)
-            out["tide_prediction_series"] = _trim_series(st.attributes.get("tide_prediction_series"))
-            tf = _trim_series(st.attributes.get("tide_forecast_series"))
-            to = _trim_series(st.attributes.get("tide_observation_series"))
-        else:
-            out["tide_prediction_series"] = None
-
-        if tf is None:
-            f = self._src_fore(st_slug)
-            out["tide_forecast_series"] = _trim_series(self.hass.states.get(f).attributes.get("tide_forecast_series") if f and self.hass.states.get(f) else None)
-        else:
-            out["tide_forecast_series"] = tf
-
-        if to is None:
-            o = self._src_obs(st_slug)
-            out["tide_observation_series"] = _trim_series(self.hass.states.get(o).attributes.get("tide_observation_series") if o and self.hass.states.get(o) else None)
-        else:
-            out["tide_observation_series"] = to
-
+        out["tide_prediction_series"] = None
+        out["tide_forecast_series"] = None
+        out["tide_observation_series"] = None
         return out
 
     async def async_added_to_hass(self) -> None:
@@ -413,7 +383,9 @@ class HavOgVindTidevannProxySensor(SensorEntity):
             _on_select_change,
         )
         self._unsub_timer = async_track_time_interval(
-            self.hass, lambda _now: self.schedule_update_ha_state(), timedelta(seconds=30)
+            self.hass,
+            lambda _now: self.schedule_update_ha_state(),
+            timedelta(seconds=30),
         )
 
     async def async_will_remove_from_hass(self) -> None:
@@ -423,6 +395,7 @@ class HavOgVindTidevannProxySensor(SensorEntity):
         if self._unsub_timer:
             self._unsub_timer()
             self._unsub_timer = None
+
 
 
 class HavOgVindBolgehoydeProxySensor(SensorEntity):
