@@ -15,6 +15,9 @@
     "error": {
       "missing_coordinates": "Latitude and longitude are required.",
       "invalid_coordinates": "Invalid latitude/longitude."
+    },
+    "abort": {
+      "already_configured": "This location is already configured."
     }
   },
   "options": {
