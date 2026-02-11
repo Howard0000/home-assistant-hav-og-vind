@@ -29,7 +29,7 @@ async def async_setup_entry(
     Integrasjonen kan ha mange config entries (én per lokasjon), men vi ønsker kun
     én global dropdown for "aktiv stasjon". Derfor oppretter vi entityen kun én gang.
     """
-    domain_data: dict[str, Any] = hass.data.setdefault(DOMAIN, {})
+    domain_data: dict[str, Any] = hass.data[DOMAIN]
     global_data: dict[str, Any] = domain_data.setdefault("_global", {})
 
     if global_data.get("active_station_select_added"):
@@ -77,13 +77,14 @@ class HavOgVindActiveStationSelect(SelectEntity):
         self.async_write_ha_state()
 
 
+
     @property
     def device_info(self) -> dict[str, Any]:
         return {
             "identifiers": {(DOMAIN, "global")},
             "name": "Hav og vind",
-            "manufacturer": "MET Norway / Kartverket / Havvarsel",
-            "configuration_url": "https://api.met.no/",
+            "manufacturer": "Hav og vind (MET / Havvarsel / Kartverket)",
+            "configuration_url": "https://github.com/Howard0000/home-assistant-hav-og-vind",
         }
 
     def _stations(self) -> list[str]:
