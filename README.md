@@ -68,6 +68,8 @@ Disse følger automatisk valgt **Aktiv stasjon**.
 
 ## 🖥️ Eksempel-dashboard (anbefalt)
 
+![Dashboard](image/dashboard.png)
+
 Denne integrasjonen er laget for å fungere ekstra godt sammen med et **stasjons-uavhengig dashboard** basert på proxy-sensorene.
 
 I repoet følger det med et ferdig eksempel-dashboard:
