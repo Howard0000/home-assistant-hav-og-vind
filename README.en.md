@@ -68,6 +68,8 @@ These automatically follow the selected **Active station**.
 
 ## 🖥️ Example dashboard (recommended)
 
+![Dashboard](image/dashboard.png)
+
 This integration is designed to work especially well with a **station-independent dashboard** based on the proxy sensors.
 
 The repository includes a ready-to-use example dashboard:
