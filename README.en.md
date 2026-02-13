@@ -2,7 +2,7 @@
 
 **English** · [Norsk](README.md)
 
-![HACS](https://img.shields.io/badge/HACS-Default-orange.svg)
+[![HACS](https://img.shields.io/badge/HACS-Default-green.svg)](https://hacs.xyz/) 
 
 A modern and user-friendly integration for bringing **weather, ocean and tide data**
 from **MET Norway**, **Havvarsel** and **Kartverket** into Home Assistant.
