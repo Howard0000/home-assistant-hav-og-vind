@@ -1,6 +1,6 @@
 # Hav og vind for Home Assistant
 
-**Norsk** · [English](README.en.md)
+**Norsk** · [English](README.md)
 
 [![HACS](https://img.shields.io/badge/HACS-Default-green.svg)](https://hacs.xyz/) 
 
